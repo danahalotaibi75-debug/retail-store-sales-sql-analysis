@@ -7,7 +7,7 @@
 
 -- ============================================================
 -- 1. Create Cleaned Table
--- Recover missing Item values when a reliable reference exists
+-- Recover missing Item values using Category + Price Per Unit
 -- ============================================================
 
 CREATE OR REPLACE TABLE
