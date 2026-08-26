@@ -6,27 +6,7 @@
 
 
 -- ============================================================
--- 1. Create Item Reference Table
--- Identify the correct Item using Category + Price Per Unit
--- ============================================================
-
-WITH item_reference AS (
-    SELECT
-        `Category`,
-        `Price Per Unit`,
-        ANY_VALUE(`Item`) AS `Item`
-    FROM `first-project-506607.retail_store_salses_1.retail_store_sales`
-    WHERE `Item` IS NOT NULL
-      AND `Category` IS NOT NULL
-      AND `Price Per Unit` IS NOT NULL
-    GROUP BY
-        `Category`,
-        `Price Per Unit`
-)
-
-
--- ============================================================
--- 2. Create Cleaned Table
+-- 1. Create Cleaned Table
 -- Recover missing Item values when a reliable reference exists
 -- ============================================================
 
