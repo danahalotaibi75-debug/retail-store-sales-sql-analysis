@@ -85,7 +85,12 @@ WHERE
 SELECT
     COUNTIF(`Price Per Unit` <= 0) AS invalid_price,
     COUNTIF(`Quantity` <= 0) AS invalid_quantity,
-    COUNTIF(`Total Spent` <= 0) AS invalid_total_spent
+    COUNTIF(`Total Spent` <= 0) AS invalid_total_spent,
+
+    COUNTIF(
+        `Quantity` IS NOT NULL
+        AND `Quantity` != CAST(`Quantity` AS INT64)
+    ) AS fractional_quantity
 
 FROM
 `first-project-506607.retail_store_salses_1.retail_store_sales_cleaned`;
