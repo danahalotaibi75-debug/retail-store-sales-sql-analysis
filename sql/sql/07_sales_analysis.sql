@@ -6,11 +6,13 @@
 
 
 -- ============================================================
--- 1. Total Sales
+-- 1. Overall Sales KPIs
 -- ============================================================
 
 SELECT
-    SUM(`Total Spent`) AS total_sales
+    SUM(`Total Spent`) AS total_sales,
+    COUNTIF(`Total Spent` IS NOT NULL) AS total_transactions,
+    COUNT(DISTINCT `Customer ID`) AS unique_customers
 
 FROM
 `first-project-506607.retail_store_salses_1.retail_store_sales_cleaned`
@@ -59,6 +61,7 @@ FROM
 WHERE
     `Total Spent` IS NOT NULL
     AND `Quantity` IS NOT NULL
+    AND `Item` IS NOT NULL
 
 GROUP BY
     `Item`,
@@ -71,7 +74,31 @@ LIMIT 10;
 
 
 -- ============================================================
--- 4. Sales Performance by Payment Method
+-- 4. Sales Performance by Location
+-- ============================================================
+
+SELECT
+    `Location`,
+    COUNT(*) AS transactions,
+    SUM(`Total Spent`) AS total_sales,
+    AVG(`Total Spent`) AS avg_transaction_value
+
+FROM
+`first-project-506607.retail_store_salses_1.retail_store_sales_cleaned`
+
+WHERE
+    `Total Spent` IS NOT NULL
+    AND `Location` IS NOT NULL
+
+GROUP BY
+    `Location`
+
+ORDER BY
+    total_sales DESC;
+
+
+-- ============================================================
+-- 5. Sales Performance by Payment Method
 -- ============================================================
 
 SELECT
@@ -85,6 +112,7 @@ FROM
 
 WHERE
     `Total Spent` IS NOT NULL
+    AND `Payment Method` IS NOT NULL
 
 GROUP BY
     `Payment Method`
@@ -94,7 +122,7 @@ ORDER BY
 
 
 -- ============================================================
--- 5. Sales Performance by Year
+-- 6. Sales Performance by Year
 -- ============================================================
 
 SELECT
@@ -118,7 +146,7 @@ ORDER BY
 
 
 -- ============================================================
--- 6. Top 10 Customers by Total Spending
+-- 7. Top 10 Customers by Total Spending
 -- ============================================================
 
 SELECT
@@ -144,7 +172,7 @@ LIMIT 10;
 
 
 -- ============================================================
--- 7. Monthly Sales Performance
+-- 8. Monthly Sales Performance
 -- ============================================================
 
 SELECT
@@ -170,7 +198,7 @@ ORDER BY
 
 
 -- ============================================================
--- 8. Discount Distribution
+-- 9. Discount Distribution
 -- ============================================================
 
 SELECT
