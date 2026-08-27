@@ -1,57 +1,60 @@
 -- ============================================================
 -- 05_quantity_total_cleaning.sql
 -- Retail Store Sales Data Cleaning Project
--- Purpose: Recover missing Quantity and Total Spent values
---          using valid numerical relationships
+-- Purpose: Validate whether missing Quantity and Total Spent
+--          values can be reliably recovered
 -- ============================================================
 
 
 -- ============================================================
--- 1. Recover Missing Quantity and Total Spent
+-- 1. Identify Recoverable Quantity Values
 --
--- Quantity can be calculated when:
--- Total Spent and Price Per Unit are available.
---
--- Total Spent can be calculated when:
--- Price Per Unit and Quantity are available.
---
--- Rows where both Quantity and Total Spent are missing
--- cannot be reliably recovered from these fields alone.
+-- Quantity can only be recovered when:
+-- Price Per Unit and Total Spent are available
+-- and the resulting quantity is a valid integer.
 -- ============================================================
-
-CREATE OR REPLACE TABLE
-`first-project-506607.retail_store_salses_1.retail_store_sales_cleaned` AS
 
 SELECT
-    `Transaction ID`,
-    `Customer ID`,
-    `Category`,
-    `Item`,
-    `Price Per Unit`,
+    COUNT(*) AS missing_quantity_rows,
 
-    CASE
-        WHEN `Quantity` IS NULL
-             AND `Price Per Unit` IS NOT NULL
-             AND `Price Per Unit` != 0
-             AND `Total Spent` IS NOT NULL
-        THEN ROUND(`Total Spent` / `Price Per Unit`, 2)
+    COUNTIF(
+        `Price Per Unit` IS NOT NULL
+        AND `Price Per Unit` != 0
+        AND `Total Spent` IS NOT NULL
+    ) AS calculable_quantity_rows,
 
-        ELSE `Quantity`
-    END AS `Quantity`,
-
-    CASE
-        WHEN `Total Spent` IS NULL
-             AND `Price Per Unit` IS NOT NULL
-             AND `Quantity` IS NOT NULL
-        THEN ROUND(`Price Per Unit` * `Quantity`, 2)
-
-        ELSE `Total Spent`
-    END AS `Total Spent`,
-
-    `Payment Method`,
-    `Location`,
-    `Transaction Date`,
-    `Discount Applied`
+    COUNTIF(
+        `Price Per Unit` IS NOT NULL
+        AND `Price Per Unit` != 0
+        AND `Total Spent` IS NOT NULL
+        AND `Total Spent` / `Price Per Unit`
+            = CAST(`Total Spent` / `Price Per Unit` AS INT64)
+    ) AS valid_integer_quantity_rows
 
 FROM
-`first-project-506607.retail_store_salses_1.retail_store_sales_cleaned`;
+`first-project-506607.retail_store_salses_1.retail_store_sales_cleaned`
+
+WHERE
+    `Quantity` IS NULL;
+
+
+-- ============================================================
+-- 2. Identify Recoverable Total Spent Values
+--
+-- Total Spent can only be recovered when:
+-- Price Per Unit and Quantity are available.
+-- ============================================================
+
+SELECT
+    COUNT(*) AS missing_total_spent_rows,
+
+    COUNTIF(
+        `Price Per Unit` IS NOT NULL
+        AND `Quantity` IS NOT NULL
+    ) AS calculable_total_spent_rows
+
+FROM
+`first-project-506607.retail_store_salses_1.retail_store_sales_cleaned`
+
+WHERE
+    `Total Spent` IS NULL;
