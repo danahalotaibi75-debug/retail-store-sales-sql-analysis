@@ -1,49 +1,43 @@
-# Retail Store Sales — Data Cleaning & SQL Analysis
+# Retail Store Sales — Data Cleaning, SQL Analysis & Power BI
 
 ## 📌 Project Overview
 
-This project focuses on cleaning, validating, and analyzing retail store sales data using SQL in Google BigQuery.
+This portfolio project demonstrates an end-to-end retail sales analysis workflow using Google BigQuery and Power BI. It covers data profiling, quality checks, evidence-based recovery of missing values, validation, business analysis, and dashboard development.
 
-The objective is to identify data quality issues, apply reliable data-cleaning techniques, validate data integrity, and extract meaningful business insights from the cleaned dataset.
-
-The project follows a structured data workflow:
-
-**Data Profiling → Data Quality Checks → Data Cleaning → Numeric Data Cleaning → Validation → Business Analysis**
+**Workflow:** Data Profiling → Quality Checks → Data Cleaning → Validation → SQL Analysis → Power BI Dashboard
 
 ---
 
 ## 🎯 Objectives
 
-- Identify and assess data quality issues
-- Analyze missing values and data inconsistencies
-- Recover missing values where reliable business rules exist
-- Preserve data integrity without unnecessarily removing records
-- Validate the cleaned dataset
-- Analyze sales and product performance
-- Analyze customer spending behavior
-- Compare online and in-store sales
-- Analyze payment methods and sales trends
-- Generate meaningful business insights
+- Identify missing values, duplicates, and numerical inconsistencies.
+- Recover missing values only when a reliable relationship exists.
+- Preserve records when missing values cannot be reconstructed safely.
+- Validate the cleaned dataset and transaction calculations.
+- Analyze category, product, location, payment, customer, and time performance.
+- Present the results in an interactive Power BI dashboard.
 
 ---
 
 ## 🛠️ Tools & Technologies
 
-- SQL
+- SQL (GoogleSQL / BigQuery Standard SQL)
 - Google BigQuery
+- Power BI
 - GitHub
 
 ---
 
 ## 📊 Dataset Overview
 
-The dataset contains **12,575 retail transaction records** covering the period from **January 1, 2022 to January 18, 2025**.
+The dataset contains **12,575 retail transaction records** covering **January 1, 2022 through January 18, 2025**.
 
 | Metric | Value |
 |---|---:|
 | Total Records | 12,575 |
+| Unique Transaction IDs | 12,575 |
 | Transactions with Recorded Sales | 11,971 |
-| Customers | 25 |
+| Unique Customers | 25 |
 | Categories | 8 |
 | Date Range | 2022-01-01 → 2025-01-18 |
 | Total Recorded Sales | 1,552,071 |
@@ -66,7 +60,7 @@ The dataset contains **12,575 retail transaction records** covering the period f
 
 ## 🧹 Data Cleaning
 
-An initial data quality assessment identified several missing-value issues.
+The initial quality assessment identified the following missing values:
 
 | Column | Initial Missing Values |
 |---|---:|
@@ -76,77 +70,65 @@ An initial data quality assessment identified several missing-value issues.
 | Total Spent | 604 |
 | Discount Applied | 4,199 |
 
+No transactions were deleted solely because they contained missing data. A value was recovered only when the dataset provided a reliable rule.
+
 ### Item
 
-Missing `Item` values were investigated using the relationship:
+Missing and blank `Item` values were recovered using:
 
 **Category + Price Per Unit → Item**
 
-The relationship was validated to ensure that each `Category + Price Per Unit` combination corresponded to a single known item.
+Only combinations associated with exactly one known item were used. The remaining 609 blank values were successfully recovered in the final table.
 
-Missing Item values were then recovered where a reliable reference existed.
-
-**Result: 1,213 → 0 NULL**
+**Result: 1,213 missing/blank values → 0**
 
 ### Price Per Unit
 
-Missing `Price Per Unit` values were investigated using the relationship:
+Missing `Price Per Unit` values were investigated using:
 
 **Total Spent ÷ Quantity → Price Per Unit**
 
-The calculated values were cross-checked against known prices in the dataset before being used for recovery.
+Calculated values were validated against known category and item prices before recovery.
 
-No existing records were removed during the cleaning process.
+**Result: 609 missing values → 0**
 
 ### Quantity
 
-604 records contained missing `Quantity` values.
-
-The relationship:
-
-**Total Spent ÷ Price Per Unit → Quantity**
-
-was tested, but none of the missing values could be reliably recovered as valid integer quantities.
-
-Therefore, these values were retained as `NULL` rather than artificially imputed.
+The relationship **Total Spent ÷ Price Per Unit → Quantity** was tested for 604 missing values. None could be recovered reliably as valid integer quantities, so they were retained as `NULL`.
 
 **Result: 604 NULL retained**
 
 ### Total Spent
 
-604 records contained missing `Total Spent` values.
-
-Because these records also lacked `Quantity`, `Total Spent` could not be reliably reconstructed using:
-
-**Price Per Unit × Quantity**
-
-Therefore, these values were retained as `NULL`.
+The same 604 records lacked the quantity needed to calculate **Price Per Unit × Quantity**, so their `Total Spent` values were retained as `NULL`.
 
 **Result: 604 NULL retained**
 
 ### Discount Applied
 
-4,199 records contained `NULL` values for `Discount Applied`.
-
-Because the available data did not provide a reliable rule for determining whether these records represented `TRUE` or `FALSE`, the values were retained as `NULL`.
-
-Unknown values were not artificially imputed when no reliable business rule was available.
+The data provided no reliable rule for determining whether 4,199 unknown discount values represented `TRUE` or `FALSE`, so they were retained as `NULL`.
 
 **Result: 4,199 NULL retained**
+
+### Final Table
+
+Because BigQuery Sandbox does not allow DML statements such as `UPDATE`, the corrected result was written with `CREATE OR REPLACE TABLE ... AS SELECT` to:
+
+`first-project-506607.retail_store_salses_1.retail_store_sales_final_v2`
 
 ---
 
 ## 🔎 Data Validation
 
-After cleaning, the dataset was validated for duplicates, missing values, and numerical consistency.
-
 | Validation Check | Result |
 |---|---:|
 | Total Records | 12,575 |
+| Unique Transaction IDs | 12,575 |
 | Duplicate Transactions | 0 |
+| Transaction ID NULL | 0 |
 | Customer ID NULL | 0 |
 | Category NULL | 0 |
-| Item NULL | 0 |
+| Item NULL/Blank | 0 |
 | Price Per Unit NULL | 0 |
 | Payment Method NULL | 0 |
 | Location NULL | 0 |
@@ -157,25 +139,19 @@ After cleaning, the dataset was validated for duplicates, missing values, and nu
 
 Additional validation confirmed:
 
-- No invalid prices
-- No invalid quantities
-- No invalid total-spent values
-- No mismatches between `Price Per Unit × Quantity` and `Total Spent` for complete records
-- No duplicate transaction IDs
+- No invalid numerical values.
+- No mismatches between `Price Per Unit × Quantity` and `Total Spent` among complete records.
+- No duplicate transaction IDs.
 
 ---
 
 ## 📈 Business Analysis
 
-### 💰 Total Sales
+### Total Sales
 
-**1,552,071**
+**1,552,071**, calculated from the **11,971 transactions with recorded `Total Spent` values**.
 
-Total recorded sales are calculated from the **11,971 transactions with available `Total Spent` values**.
-
----
-
-### 🥩 Sales by Category
+### Sales by Category
 
 | Category | Total Sales |
 |---|---:|
@@ -186,25 +162,13 @@ Total recorded sales are calculated from the **11,971 transactions with availabl
 | Food | 194,812 |
 | Computers and electric accessories | 190,692.5 |
 | Patisserie | 182,165.5 |
-| Milk Products | **180,112** |
+| Milk Products | 180,112 |
 
-**Butchers** generated the highest total sales, while **Milk Products** recorded the lowest.
+### Top-Selling Product
 
----
+`Item_25_FUR` was the top-selling product with **25,256** in recorded sales.
 
-### 🏆 Top-Selling Product
-
-**Item_25_FUR**
-
-| Metric | Value |
-|---|---:|
-| Total Sales | 25,256 |
-| Units Sold | 616 |
-| Transactions | 113 |
-
----
-
-### 🛒 Sales by Location
+### Sales by Location
 
 | Location | Total Sales |
 |---|---:|
@@ -213,9 +177,7 @@ Total recorded sales are calculated from the **11,971 transactions with availabl
 
 Online sales were approximately **4.04% higher** than in-store sales.
 
----
-
-### 💳 Sales by Payment Method
+### Sales by Payment Method
 
 | Payment Method | Total Sales |
 |---|---:|
@@ -223,11 +185,7 @@ Online sales were approximately **4.04% higher** than in-store sales.
 | Digital Wallet | 507,279 |
 | Credit Card | 507,082 |
 
-Cash generated the highest total sales among the available payment methods.
-
----
-
-### 📅 Yearly Sales
+### Yearly Sales
 
 | Year | Total Sales |
 |---|---:|
@@ -238,13 +196,11 @@ Cash generated the highest total sales among the available payment methods.
 
 **2024 recorded the highest sales among the complete years.**
 
-\* 2025 contains partial-year data through January 18, 2025 and should not be directly compared with complete years.
+\*2025 contains partial data through January 18 and should not be compared directly with complete years.
 
----
+### Top Customer
 
-### 👥 Top Customer
-
-**CUST_24**
+`CUST_24` was the highest-spending customer:
 
 | Metric | Value |
 |---|---:|
@@ -252,23 +208,11 @@ Cash generated the highest total sales among the available payment methods.
 | Transactions | 519 |
 | Average Transaction Value | 131.89 |
 
----
+### Calendar-Month Analysis
 
-### 📅 Monthly Sales
+When the same calendar month was aggregated across all years, January recorded the highest sales (**174,421**) and the most recorded-sales transactions (**1,295**). The Power BI dashboard uses a chronological Year–Month axis instead, so trends from 2022 through January 2025 are not mixed across years.
 
-January recorded the highest aggregated monthly sales:
-
-**174,421**
-
-It also recorded the highest number of transactions:
-
-**1,295**
-
-> Note: Monthly results aggregate the same calendar month across all years in the dataset.
-
----
-
-### 🏷️ Discount Analysis
+### Discount Analysis
 
 Among transactions with a known discount status:
 
@@ -277,35 +221,37 @@ Among transactions with a known discount status:
 | TRUE | 4,219 | 50.37% |
 | FALSE | 4,157 | 49.63% |
 
-`NULL` discount values were excluded because their discount status was unknown.
+The 4,199 `NULL` values were excluded because their discount status was unknown.
 
 ---
 
 ## 💡 Key Business Insights
 
-- **Butchers** was the highest-performing category with **208,118** in total sales.
-- **Item_25_FUR** was the top-selling individual product with **25,256** in sales.
-- **Online sales** exceeded in-store sales by approximately **4.04%**.
-- **Cash** generated the highest total sales among payment methods.
-- **2024** was the strongest complete year in the dataset with **524,881** in sales.
-- **CUST_24** was the highest-spending customer with **68,452** in total spending.
-- **January** recorded the highest aggregated monthly sales at **174,421**.
+- Butchers was the highest-performing category with **208,118** in total sales.
+- `Item_25_FUR` was the top-selling product with **25,256** in sales.
+- Online sales exceeded in-store sales by approximately **4.04%**.
+- Cash generated the highest sales among the payment methods.
+- 2024 was the strongest complete year with **524,881** in sales.
+- `CUST_24` was the highest-spending customer with **68,452**.
 - Discounted and non-discounted transactions were almost evenly distributed among records with known discount status.
 
 ---
 
-## 📊 Dashboard
+## 📊 Power BI Dashboard
 
 The final dashboard includes:
 
-- Total Sales KPI
-- Total Transactions KPI
-- Customer Count KPI
+- Total Sales
+- Recorded Sales Transactions
+- Unique Customers
 - Sales by Category
 - Online vs In-store Sales
-- Monthly Sales Trend
-- Top 10 Products
+- Monthly Sales Trend using a chronological Year–Month axis
 - Sales by Payment Method
+- Top 10 Products by Sales
+- Top 10 Customers by Spending
+
+January 2025 is clearly identified as partial data through January 18.
 
 ![Retail Sales Dashboard](dashboard/retail_sales_dashboard.png)
 
@@ -315,21 +261,18 @@ The final dashboard includes:
 
 ```text
 retail-store-sales-sql-analysis/
-│
 ├── README.md
-│
 ├── sql/
-│   ├── 01_data_profiling.sql
+│   ├── 01_data_quality.sql
 │   ├── 02_data_quality_checks.sql
 │   ├── 03_data_cleaning.sql
 │   ├── 04_numeric_data_cleaning.sql
 │   ├── 05_quantity_total_cleaning.sql
 │   ├── 06_cleaning_validation.sql
-│   └── 07_sales_analysis.sql
-│
+│   ├── 07_sales_analysis.sql
+│   └── 08_final_item_recovery.sql
 ├── dashboard/
 │   └── retail_sales_dashboard.png
-│
 └── screenshots/
     ├── 01_bigquery_schema.png
     ├── 02_data_quality.png
@@ -338,3 +281,10 @@ retail-store-sales-sql-analysis/
     ├── 05_quantity_total_cleaning.png
     ├── 06_validation.png
     └── 07_business_analysis.png
+```
+
+---
+
+## Data Integrity Principle
+
+Unknown values were preserved when they could not be recovered from a validated relationship. This avoids introducing unsupported assumptions into the analysis.
